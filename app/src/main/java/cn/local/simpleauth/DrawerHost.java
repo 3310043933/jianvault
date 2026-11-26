@@ -44,7 +44,7 @@ final class DrawerHost extends FrameLayout {
         panel.removeAllViews(); panel.addView(menu.get()); panel.setPadding(0, topInset, 0, bottomInset);
         open = true; shade.setVisibility(VISIBLE); panel.setVisibility(VISIBLE); panel.requestFocus();
         main.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
-        announceForAccessibility("导航菜单已打开");
+        announceForAccessibility(getContext().getString(R.string.drawer_opened));
     }
     void close() { open = false; panel.setVisibility(GONE); shade.setVisibility(GONE); panel.removeAllViews(); main.setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_AUTO); }
     @Override public boolean onInterceptTouchEvent(MotionEvent event) {

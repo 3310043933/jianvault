@@ -1,149 +1,84 @@
-# 简验证 1.5
+# JianVault · 简验证
 
-用于 GitHub 等服务的本地安卓账号密码、TOTP 验证码与恢复码保险库。支持 Android 8.0 及以上。
+**English** | [简体中文](README.zh-CN.md)
 
-## 使用
+An offline Android vault for TOTP codes, website credentials, recovery codes, and encrypted backups.
 
-1. 安装交付的 `简验证-1.5.apk`。已有旧版的用户直接覆盖安装，保留已有账号，请勿先卸载。手机如提示，请为用于打开 APK 的文件管理器临时允许安装未知应用。
-2. 手机需已设置锁屏密码、图案或 PIN；打开应用后通过系统身份验证。
-3. 首页只显示动态验证码。「扫码添加」或「手动添加」用于录入网站双重验证密钥，验证码按周期自动刷新。密钥本身不会按周期更换。
-4. 固定的网站密码不显示在动态验证码页面。点击左上角 ☰，或从屏幕左侧中部向右滑动，打开侧边栏，点击「网站账号密码」。在该主页面切换全部网站、未分组或某个组，再点击「保存网站账号密码」。
-5. 将生成的 6 位验证码填回 GitHub 完成绑定，并保存 GitHub 的恢复码。
+Suggested GitHub repository name: **`jianvault`**
 
-## 完全一致才跳过的合并导入（1.5 新增）
+## Features
 
-- 解密成功后默认提供「合并导入」，先预览新增条目、跳过完全重复条目及新增分组数量，确认前不写入。
-- 仅当完整记录的全部保存值一致时跳过；任一值不同就追加为另一条记录，保留本机原记录，既不覆盖旧值，也不把字段拼接到旧条目。
-- 比较包括：条目类型、网站名称、账号显示名称、验证码密钥、算法、位数、周期、所属分组、网站地址、登录账号、密码、备注，以及恢复码内容、顺序和已使用状态。比较的是保存的密钥与参数，不是随时间变化的验证码数字。
-- 密码、备注按原样比较，大小写、空格、换行不同都算不同。名称和地址按现有存储模型中的值比较，不额外归一化。
-- 同名分组先对应，内部编号不同不算用户内容不同。分组名称不同会分别保留，内部编号冲突时为导入组安排新的稳定编号；仅大小写等原因导致名称不能并存时，为导入组加「（导入）」等标记并在预览中提示，不修改本机分组。
-- 同一备份内部的完全重复记录也只新增一次。再次合并相同备份不会继续增加记录或分组。已有本机重复记录不会被自动删除。
-- 同一网站、同一账号，只有密码或备注不同，也会保留为两条。恢复码已用状态不同同样保留为不同记录。
-- 空分组也会合并保存。合并后的分组超过 1000 个时停止合并，不修改本机数据。
-- 「覆盖恢复…」作为单独选项保留，再次确认后才替换整库。若本机保险库无法读取，不能比较去重，此时仅提供覆盖恢复。
-- 原有备份格式、用户输入的 Key 和加密算法不变，旧版加密备份可直接使用。
+- **Authenticator:** scan a QR code or enter a TOTP setup key. Supports SHA1/SHA256/SHA512, 6/8 digits, and refresh periods of 1–300 seconds.
+- **Website credentials:** save names, URLs, usernames, passwords, and multiline notes. Organize entries into groups or leave them ungrouped, search by name/URL/username, and copy individual fields or the complete entry.
+- **Recovery codes:** store and mark codes used within authenticator entries. Copying a code does not mark it used or change its status on the website. Website credential pages use notes instead of recovery-code controls.
+- **Encrypted backups:** supply your own key, export all vault records and groups as encrypted text, copy the text, or save a UTF-8 TXT file. Import through a TXT file or pasted text.
+- **Exact-match merge:** skip only records whose complete stored contents match. Any changed field creates a separate entry. Existing records remain intact, including existing local duplicates. Replacement is a separate, confirmed action.
+- **Chinese and English:** follow the system language or select 简体中文 / English in **Help → Language**. Language selection never translates or changes saved names, credentials, notes, group names, or backup contents.
 
-## 四项侧栏导航（1.4.1 调整）
+The navigation menu contains exactly four pages: **Authenticator**, **Website credentials**, **Encrypted import / export**, and **Help**. Website group controls stay on the website credentials page.
 
-侧栏固定只有以下四个导航入口，各自打开主内容页面：
+## Getting started
 
-1. 动态验证码：扫码添加、手动添加和按周期更新的验证码。
-2. 网站账号密码：保存网站、搜索、查看详情、编辑、备注、一键复制，以及页面内的分组选择与「管理分组」。分组不再占用侧栏入口。
-3. 导入导出加密数据：统一展示导出、导入入口和备份说明，点击对应按钮再填写 Key、选择 TXT 或粘贴密文。
-4. 使用说明：在主页面滚动阅读功能说明。
+1. Install a locally built APK on Android 8.0 or later. Set a device screen lock before opening the vault.
+2. For TOTP, add the website's authenticator setup key or scan its QR code, then enter the generated code on that website to complete setup. A TOTP setup key is different from a login password. The code changes with time; the setup key does not.
+3. For fixed passwords, open **Website credentials** and save an entry. Use the group selector and **Manage groups** on that page. Deleting a group moves its entries to **Ungrouped** without deleting their data.
+4. Open entry details to view, edit, move, or copy credentials. Passwords are hidden by default. **Copy all** includes the name, URL, username, password, and nonempty notes.
+5. Open **Help → Language** to change the interface language. Switching recreates the app screen and may require system authentication again.
 
-页面切换和分组筛选不更改保险库格式或加密方式，旧版本数据和备份仍可继续使用。
+## Backup and import
 
-## Key 加密导出与导入（1.4 新增）
+Open **Encrypted import / export**:
 
-### 导出
+- **Export:** enter and confirm your own key of 12–1024 characters. Case, Unicode, and spaces are preserved. Export includes TOTP accounts, website credentials, notes, groups (including empty groups), recovery codes, and used flags. The key is not saved in the backup or persisted by the app.
+- **Import:** select the encrypted TXT file or paste the encrypted text, then enter the same key. Nothing changes before decryption and confirmation.
+- **Merge:** preview additions and skips. Complete equality includes type, names, URL, username, password, notes, group membership, TOTP key/settings, and recovery-code contents, order, and used flags. Same-name groups are matched before comparing entries; internal group IDs alone do not create duplicates. Group conflicts are preserved separately. Reimporting the same backup is idempotent.
+- **Replace:** a separate confirmation replaces the entire local vault. Local records absent from the backup are deleted. If the local vault cannot be read, merging is unavailable and replacement is the recovery option.
 
-1. 侧边栏 →「导入导出加密数据」→「加密导出全部数据」。
-2. 输入并再次确认 Key，长度 12～1024 字符，建议使用较长的随机口令。大小写、空格及 Unicode 字符按原样使用，不会自动去除空格。Key 不写入备份或持久化保存，请单独保管；丢失 Key 无法解密备份。
-3. 点击「加密并复制」。后台完成加密后自动复制加密文本，内容以 `SIMPLEAUTH-BACKUP-1:` 开头。备份包含全部动态验证码、网站账号密码、备注、分组（含空组）、恢复码及使用状态，包括旧版中保留但未在密码页显示的恢复码。
-4. 可再次复制，也可点击「保存 TXT」通过系统文件保存器保存为 UTF-8 文本。文件仅包含加密文本，不包含明文账号密码或 Key。
+Keep the backup and its key separately. **A lost key cannot decrypt a backup.** Import re-encrypts the data with the destination device's local key, so a backup can be transferred between devices. This is manual transfer, not automatic cloud synchronization.
 
-### 导入
+Backups start with `SIMPLEAUTH-BACKUP-1:` and use PBKDF2-HMAC-SHA256 (600,000 iterations, random 16-byte salt), followed by AES-256-GCM with a random 12-byte nonce and an authenticated header. The serialized plaintext limit is 8 MiB and the encrypted TXT limit is 12 MiB. Clipboard export is limited to 250,000 characters; larger backups must be saved as TXT. UTF-8 BOM, CRLF, and wrapped Base64 are accepted on import.
 
-1. 侧边栏 →「导入导出加密数据」→「选择文件 / 粘贴导入」，粘贴加密文本，或选择保存的 TXT 文件。
-2. 输入导出时的同一个 Key，点击「解析备份」。支持 UTF-8 BOM、CRLF 换行及 Base64 折行。只能解析本应用的加密备份，不导入未经加密的 JSON。
-3. Key 或内容有误时拒绝解析，不修改本机数据。成功后先显示验证码、网站密码、分组、恢复码数量。
-4. 选择「合并导入」按上面的完整记录规则去重并追加，原有数据不覆盖。若选择「覆盖恢复…」，则会再次确认，之后才用备份替换本机全部数据；备份中不存在的本机记录会被删除，建议先备份当前数据。取消不作修改。
-5. 导入的数据使用当前手机 Android Keystore 的密钥重新加密、原子写入。备份可用于另一台安装本应用的设备，不需要复制原手机系统密钥。本机保险库无法读取时，仍可从侧边栏选择有效备份进行恢复；若系统密钥或存储不可用，恢复会失败并保留原文件。
+## Security and current limits
 
-### 格式与边界
+- No network permission, telemetry, ads, or automatic cloud sync.
+- Local vault contents are encrypted with AES-256-GCM. The AES key is generated and managed by Android Keystore. The app writes the encrypted snapshot atomically into its private no-backup directory.
+- Credential data, groups, notes, and recovery codes are encrypted. The device's non-sensitive interface-language preference is stored separately and is not part of a vault backup.
+- System authentication gates entry to the app. **The current Keystore key does not itself require authentication for every use.** Screen-lock gating and key-use authorization are distinct protections.
+- Sensitive app screens request screenshot blocking. Credential inputs disable view-state saving and autofill. The app requests that keyboards avoid personalized learning; these requests are not a guarantee about third-party keyboards or a compromised system.
+- Viewing data requires plaintext in memory. Copying credentials puts plaintext on the system clipboard. The app attempts to clear unchanged credential clipboard contents after 30 seconds when the system permits it. Background clipboard access may be restricted. Encrypted backup text does not use that 30-second clearing timer.
+- Uninstalling, clearing app data, losing the device, or losing its system key can make local data inaccessible. Recovery requires an earlier encrypted backup and its matching key.
+- This is a personal-use test project. JVM tests and APK builds have been checked; complete on-device UI, picker, clipboard, authentication, and Keystore testing and an independent security audit are still outstanding. Android Lint has not been completed in the original environment because its dependencies could not be downloaded reliably.
 
-- 备份使用 PBKDF2-HMAC-SHA256（600000 次、随机 16 字节 salt）从 Key 派生 256 位密钥，再用 AES-256-GCM 和随机 12 字节 nonce 加密。版本、迭代参数、salt 和 nonce 作为认证头参与校验；导入时只接受受支持的固定参数，避免恶意设置超高迭代次数。
-- 每次导出都重新生成 salt 与 nonce，同样数据和 Key 会生成不同的备份文本。Key 不保存于备份；备份可被离线尝试猜解，因此不要使用简单或已泄露的口令。
-- 明文序列化数据上限 8 MiB，加密 TXT 上限 12 MiB；超过限制会提示，不静默截断。为避开 Android 剪贴板事务大小限制，超过 250000 字符的加密文本请使用「保存 TXT」。系统若拒绝复制，也可保存 TXT。
-- 加密备份剪贴板被标记为敏感内容，不使用明文复制功能的 30 秒清理逻辑；系统仍可能自行清除剪贴板，长期保存请使用 TXT。复制备份时不会复制 Key。
-- 文件读写与加解密在后台线程执行。切换到后台后锁定应用并丢弃旧操作的展示结果；必要时重新操作。导入、导出 Key 不保存到 View 状态。文件选择期间仅临时保留密文及 URI，进程被系统终止后需重新导出或选文件。
-- PBKDF2 参数参考：[OWASP Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html)。当前实现不作 FIPS 或独立安全审计认证声明。
+The app language changes interface text and copy-field labels only. User-provided strings and stable stored conflict labels are never translated, so existing backups and merge behavior remain compatible across languages.
 
-## 网站密码备注（1.3.1 新增）
+## Build
 
-- 网站账号密码详情不再提供恢复码入口。动态验证码首页条目仍可保存和管理恢复码；旧版网站密码条目中已保存的恢复码仅保留在加密数据里，不因本次升级而删除。
-- 新建或编辑网站密码时可填写多行备注（可选，最多 32768 字符）。保存后在详情页查看，支持修改或清空，不影响其他字段和所属分组。
-- 备注与账号密码一起加密保存，保留换行、空格、中文和特殊字符，不写明文文件或日志，输入框关闭自动填充与 View 状态保存。
-- 「一键复制全部」在有备注时，会在原四个字段后增加「备注：」及完整内容；备注为空时仍仅复制原来的四个字段。复制会将备注和密码放入系统剪贴板。
-
-## 分组浏览与完整复制（1.3 新增）
-
-- 导航路径：侧边栏 → 网站账号密码 → 页面内选择全部网站 / 未分组 / 自建分组 → 网站列表 → 网站详情。
-- 可以创建多个分组，包括空组；条目可选择一个组或不分组。旧版保存的网站密码默认归入「未分组」。已有验证器条目附带的登录信息也能在密码列表中找到。
-- 分组名称为 1～40 字，不允许重名。网站账号密码页面里的「管理分组」可新建、重命名或删除分组。删除组后，网站移到「未分组」，不删除密码、验证码或恢复码。
-- 网站列表使用复用行的滚动列表，按名称排序，显示名称、账号、地址和所属组，不展示密码。支持搜索名称、地址、账号；不搜索密码内容。
-- 在组内新建网站会默认选择当前组；编辑条目或详情页「移动到其他组 / 不分组」可更改所属组。
-- 网站详情的「一键复制全部」一次复制当前条目的四个字段，格式为：
-
-```text
-名称：Example
-地址：https://example.invalid
-账号：your-account
-密码：your-password
-```
-
-- 上述示例均为虚构数据。实际复制会包含完整明文密码，有备注时会追加备注，保留原来的大小写、空格和特殊字符；不会复制动态验证码密钥或恢复码。复制内容标记为敏感剪贴板，系统允许时尝试在 30 秒后清除。
-- 网站密码是固定登录信息，只有手动编辑保存时才会改变，不随验证码倒计时自动更新。
-
-## 保存网站账号密码
-
-- 从侧边栏进入网站账号密码主页面，点击「保存网站账号密码」，填写网站名称、网站地址（可选）、登录账号、密码和分组，即可建立独立密码条目，不需要验证码密钥。同一网站可以保存多个账号。
-- 点击网站列表中的条目进入详情，可复制全部信息，也可分别复制账号和密码并进入编辑。密码默认隐藏，必须主动勾选才会显示，按原样保存。
-- 修改旧验证器条目附带的登录信息，不会修改验证码密钥或恢复码。删除这种登录信息时保留动态验证码及恢复码；删除独立密码条目会同时删除该条目中的恢复码。
-- 所有字段，包括网站名称、地址、账号和密码，都会先组成内存中的数据，再整体经过 AES-GCM 加密后写入应用私有文件。不使用明文文件、明文偏好设置或日志保存密码。查看和编辑时需要在内存中使用明文；复制时明文进入系统剪贴板，请及时粘贴。
-- 账号和密码输入框关闭自动填充、View 状态保存和个性化输入学习请求；敏感对话框禁止截图，退到后台后关闭，下次进入需通过系统身份验证。
-- OnlyKey 自动同步仍处于方案阶段，本版本不联网，无云端同步；可以手动导出加密备份并在其他设备导入。
-
-## 保存与使用恢复码（1.1 新增）
-
-1. 点击首页动态验证码条目里的「保存恢复码」，粘贴网站提供的整组代码后保存。网站账号密码页面不提供此功能。每行一条，也支持空格、逗号和分号分隔；可直接粘贴带圆点符号或两列文本的 GitHub 恢复码。只粘贴代码，不要包含页面标题、说明或序号。
-2. 每个账号独立保存，最多 200 条；每条支持 4～128 位字母、数字、连字符或下划线，不包含空格。保持大小写和连字符，完全相同的条目会合并。
-3. 点击「恢复码」管理：默认隐藏内容，可勾选显示完整代码；「复制」只复制单条，不自动标记使用。
-4. 在网站使用成功后，点击「标记已使用」。已使用的条目会停用复制按钮；标记错误时可以改为未使用。标记只影响本机记录，不会连接网站或改变代码在网站的有效性。
-5. 网站生成了新的一组代码时，选择「替换 / 清空」重新粘贴，确认后替换全部旧代码和使用记录。「清空」只清除当前账号的恢复码。移除整个账号会同时删除其恢复码。
-
-恢复码与验证码密钥一起加密保存在本机。保存到本应用不能替代独立备份：手机丢失、应用卸载或清除数据时，两者都会丢失。请在另一个安全位置单独保存恢复码。不要向他人发送恢复码截图；如已暴露，建议在相应网站重新生成后保存新的一组。
-
-没有自动读取、识别或保存聊天截图中的真实恢复码，需要在手机上自行粘贴。
-
-默认手动账号使用 SHA1、6 位、30 秒。二维码和完整链接支持 SHA1/SHA256/SHA512、6/8 位和 1～300 秒周期；不支持 HOTP、Steam 或厂商推送批准。
-
-## 数据与保护
-
-- 不申请网络权限，不连接服务器，不收集遥测。
-- 使用 Android Keystore 管理 AES-256 密钥，以 AES-GCM 加密本地账号文件（包括分组名称、所属分组、网站地址、登录账号、密码、备注、验证码密钥、恢复码及使用状态），原子写入。支持读取旧版数据，无备注字段时默认为空。加密密钥别名、文件封装格式和内部 JSON format 2 不变，读取失败时不会覆盖原文件。
-- 禁止系统云备份和设备迁移；加密文件存放在 no-backup 私有目录。
-- 应用回到前台时通过系统锁屏身份验证；锁定时清空界面和账号列表引用。
-- 主界面、密码和恢复码对话框禁止截图和录屏；手动密钥框、密码与恢复码输入框禁止自动填充和 View 状态保存。退到后台时关闭敏感对话框。
-- 复制账号、密码、验证码或恢复码时标记为敏感剪贴板；30 秒后在系统允许读取剪贴板且内容未变化时清除。后台剪贴板访问受系统限制，无法保证后台清除。
-- 无云同步。卸载、清除应用数据、手机丢失或系统密钥丢失后，只能凭预先保存的加密备份和对应 Key 恢复；未备份的数据无法找回。请单独保存各网站恢复码，并在使用前确认有其他恢复途径。
-- 该初版没有独立安全审计、硬件攻击测试或真机验证。系统锁屏验证保护的是应用入口，加密密钥没有设置逐次使用的用户认证要求；被攻陷的系统或已被控制的应用进程不在保护范围内。
-
-## 编译
-
-使用 JDK 17、Android SDK 36 和 Gradle Wrapper 8.13。首次构建需访问 Google Maven、Maven Central 以及 Gradle 分发站点。
-
-本次交付的 235 项检查已通过：原有检查 193 项，新增完整记录合并检查 42 项。逐一改变字段验证会新增，覆盖完全重复、导入内部重复、重复导入、密码大小写与空格、备注换行、恢复码顺序与状态、分组对应与冲突、哈希碰撞不误判、保留已有本机重复记录，以及合并后加密保存等情况。Android Lint 检查组件此前下载遇到 TLS/超时问题，静态检查未完成；本次沿用跳过 Lint 的打包方式。尚未进行真机的导入预览与确认、系统文件选择器、剪贴板、界面、锁屏及 Android Keystore 端到端测试。新旧 APK 签名一致，应用 ID 相同，版本号递增以支持覆盖更新。
-
-在 `local.properties` 配置本机 SDK 路径（该文件未包含在源码压缩包）：
+Requirements: **JDK 17**, **Android SDK 36**, and the bundled **Gradle 8.13 wrapper**. Minimum Android API: **26**. Configure Android Studio's SDK or create an ignored `local.properties`:
 
 ```properties
 sdk.dir=C:/Android/Sdk
 ```
 
 ```powershell
-.\gradlew.bat :app:assembleDebug :app:lintDebug
+.\gradlew.bat :app:assembleDebug
+.\gradlew.bat :app:lintDebug
 ```
 
-正常交付版本构建命令为 `./gradlew.bat :app:assembleRelease`，输出 `app/build/outputs/apk/release/app-release.apk`。本次因检查工具下载受阻，构建命令额外使用了 `-x lintVitalAnalyzeRelease -x lintVitalReportRelease -x lintVitalRelease`。交付 APK 关闭调试功能，使用本机 Android debug 证书签名，是可安装的测试版。以后覆盖更新需使用相同签名；不要卸载旧版后再安装来解决签名冲突，否则会删除账号。
+On macOS/Linux, use `./gradlew` instead. Debug output: `app/build/outputs/apk/debug/app-debug.apk`.
 
-## 算法验证
+The current release build configuration also uses the local debug signing configuration, with debugging disabled. Before distributing production releases, establish a private release-signing and upgrade plan. **Do not uninstall an installed vault to work around a signing mismatch:** uninstalling deletes its local data. Signing keys, APKs, build outputs, caches, and `local.properties` must not be committed.
 
-运行 `tests/run.ps1`（需要 JDK 17，设置 JAVA_HOME）。共 235 项测试，包含验证码、恢复码、登录信息、备注、加密、分组、搜索、完整复制、旧版 JSON 迁移、Key 加密备份及完整记录合并。测试仅使用合成数据，不包含真实密码、Key 或恢复码。JSON 运行库仅用于 JVM 测试，不打包进 APK；加密测试运行于 JDK，不替代 Android Keystore 真机验证。
+## Tests and development
 
 ```powershell
+$env:JAVA_HOME = 'C:\path\to\jdk-17'
 .\tests\run.ps1
 ```
 
-参考：[RFC 6238](https://www.rfc-editor.org/rfc/rfc6238.html)、[otpauth 格式](https://github.com/google/google-authenticator/wiki/Key-Uri-Format)、[Android Keystore](https://developer.android.com/privacy-and-security/keystore)。扫码使用 [ZXing Android Embedded 4.3.0](https://github.com/journeyapps/zxing-android-embedded)（Apache-2.0）；许可证和依赖说明见 `THIRD_PARTY.md`。
+Tests use synthetic credentials only. The suite covers RFC 6238 vectors, recovery codes, exact credential preservation, notes, authenticated encryption, legacy data migration, group handling, encrypted portable backups, complete-record merging, copy labels, and language-resource consistency. JVM tests do not replace Android device testing.
+
+Development instructions: [English](AGENTS.md) · [简体中文](AGENTS.zh-CN.md). Complete necessary verification and create a local Git commit for each finished change.
+
+## Licensing and dependencies
+
+No project-wide license has been selected yet. Third-party component notices and their original licenses are preserved separately: [English](THIRD_PARTY.md) · [简体中文](THIRD_PARTY.zh-CN.md).

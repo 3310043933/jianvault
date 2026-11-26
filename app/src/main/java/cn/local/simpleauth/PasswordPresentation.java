@@ -21,7 +21,9 @@ public final class PasswordPresentation {
         result.sort((a, b) -> { int order = collator.compare(a.issuer, b.issuer); return order != 0 ? order : collator.compare(a.login.username, b.login.username); });
         return result;
     }
-    public static String copyAll(Otp.Account a) {
+    public static String copyAll(Otp.Account a) { return copyAll(a, false); }
+    public static String copyAll(Otp.Account a, boolean english) {
+        if (english) return "Name: " + a.issuer + "\nURL: " + a.login.website + "\nUsername: " + a.login.username + "\nPassword: " + a.login.password + (a.login.notes.isEmpty() ? "" : "\nNotes: " + a.login.notes);
         return "名称：" + a.issuer + "\n地址：" + a.login.website + "\n账号：" + a.login.username + "\n密码：" + a.login.password
             + (a.login.notes.isEmpty() ? "" : "\n备注：" + a.login.notes);
     }

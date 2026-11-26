@@ -1,8 +1,12 @@
-# 项目工作约定
+# Project instructions
 
-- 本项目的主源码目录为 `D:\p\github\简验证`。今后的代码修改在本目录进行。
-- 每次完成用户要求的一次修改并执行必要验证后，创建一个本地 Git 提交，提交说明清楚描述这次修改。
-- 提交只包含这次工作相关的修改，保留用户已有的无关改动。
-- 仓库只保留项目源代码、构建配置、必要依赖、测试和文档；不提交 APK/AAB、编译输出、缓存、local.properties、签名私钥或真实用户保险库数据。
-- 使用 `tests/run.ps1` 运行核心测试，设置本机 JDK 17 的 JAVA_HOME；Android 构建使用 SDK 36。local.properties 由本机配置并保持忽略。
-- 密码、备注、恢复码和用户输入的备份 Key 不得写入日志或明文持久化。测试仅使用合成数据。
+**English** | [简体中文](AGENTS.zh-CN.md)
+
+- The canonical source checkout is `D:\p\github\简验证`. Make future changes in this checkout.
+- For each completed user-requested change, run the necessary verification and create a local Git commit describing the change.
+- Commit only work related to the current request; preserve unrelated user changes.
+- Keep source code, build configuration, required dependencies, tests, and documentation in the repository. Do not commit APK/AAB files, build outputs, caches, `local.properties`, private signing keys, or real vault data.
+- Run core checks with `tests/run.ps1`, using JDK 17 through `JAVA_HOME`. Android builds require SDK 36. Keep machine-specific configuration ignored.
+- Never write passwords, notes, recovery codes, or user-supplied backup keys to logs or plaintext persistence. Use synthetic test data only.
+- Keep English and Chinese documentation linked and consistent. UI strings belong in `values/strings.xml` and `values-zh/strings.xml`; translate validation errors at the presentation boundary only.
+- Do not translate saved user content or change the backup schema, encryption, stable merge labels, or record equality merely to change the UI language.
