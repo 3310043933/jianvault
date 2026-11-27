@@ -35,8 +35,11 @@ jobs:
         run: |
           $version = (Select-String -Path release/version.properties -Pattern '^versionName=(.+)$').Matches[0].Groups[1].Value
           if ($env:RELEASE_TAG -cne ('v'+$version)) { throw 'Tag does not match release/version.properties' }
-      - name: Install Android SDK components
-        run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+        with:
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
+          log-accepted-android-sdk-licenses: 'false'
       - name: Build and verify public APK
         shell: pwsh
         env:
