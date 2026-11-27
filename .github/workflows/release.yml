@@ -1,5 +1,7 @@
-name: Signed release draft
+name: Signed release
 on:
+  push:
+    tags: ['v*']
   workflow_dispatch:
     inputs:
       tag:
@@ -9,8 +11,10 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: release-${{ inputs.tag }}
+  group: release-${{ inputs.tag || github.ref_name }}
   cancel-in-progress: false
+env:
+  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
 jobs:
   release:
     runs-on: ubuntu-24.04
@@ -18,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
-          ref: ${{ inputs.tag }}
+          ref: ${{ env.RELEASE_TAG }}
           fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
@@ -28,8 +32,6 @@ jobs:
           cache: gradle
       - name: Validate release tag
         shell: pwsh
-        env:
-          RELEASE_TAG: ${{ inputs.tag }}
         run: |
           $version = (Select-String -Path release/version.properties -Pattern '^versionName=(.+)$').Matches[0].Groups[1].Value
           if ($env:RELEASE_TAG -cne ('v'+$version)) { throw 'Tag does not match release/version.properties' }
@@ -51,11 +53,10 @@ jobs:
             [IO.File]::WriteAllBytes($env:JIANVAULT_STORE_FILE,[Convert]::FromBase64String($env:JIANVAULT_KEYSTORE_BASE64))
             ./scripts/build-release.ps1 -OutputDirectory (Join-Path $env:RUNNER_TEMP 'jianvault-release-assets') -SkipLint
           } finally { Remove-Item -LiteralPath $env:JIANVAULT_STORE_FILE -Force -ErrorAction SilentlyContinue }
-      - name: Create draft with installable APK
+      - name: Publish release with installable APK
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ inputs.tag }}
         run: |
           $dir = Join-Path $env:RUNNER_TEMP 'jianvault-release-assets'
           $data = Get-Content -LiteralPath (Join-Path $dir 'RELEASE_DATA.json') -Raw | ConvertFrom-Json
@@ -63,4 +64,6 @@ jobs:
           if ($data.prerelease) { $args += '--prerelease' }
           $args += @((Join-Path $dir ('jianvault-'+$env:RELEASE_TAG.Substring(1)+'.apk')),(Join-Path $dir 'SHA256SUMS.txt'),(Join-Path $dir 'SIGNING_CERTIFICATE.txt'))
           & gh @args
-          if ($LASTEXITCODE -ne 0) { throw 'Draft creation failed. An existing release is never overwritten automatically.' }
+          if ($LASTEXITCODE -ne 0) { throw 'Release creation failed. An existing release is never overwritten automatically.' }
+          & gh release edit $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY --draft=false
+          if ($LASTEXITCODE -ne 0) { throw 'Assets uploaded, but publishing failed. Inspect the draft in GitHub Releases.' }

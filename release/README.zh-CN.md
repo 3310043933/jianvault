@@ -38,21 +38,32 @@
 
 预期的公开证书哈希位于 `release/signing-certificate.sha256`，私钥和密码不进 Git。初始维护者的本机签名资料保存在 `%LOCALAPPDATA%/JianVault/signing`。请将 keystore 和对应密码另做安全备份；丢失后将无法按当前签名正常覆盖更新。不要每个版本重新生成私钥。
 
-## 可选：以后让 GitHub Actions 生成草稿
+## GitHub Actions 自动打包发布
 
-这个功能可以以后再配置，不影响这次手动上传，工作流也不会自动公开发布。
+首次将四个签名 secrets 配置到仓库的 **Settings → Secrets and variables → Actions**：`JIANVAULT_KEYSTORE_BASE64`、`JIANVAULT_STORE_PASSWORD`、`JIANVAULT_KEY_ALIAS`、`JIANVAULT_KEY_PASSWORD`。可以手动填写，也可以运行 `scripts/configure-github-signing.ps1`。
 
-1. 安装 GitHub CLI，并登录自己的仓库。
-2. 用脚本设置四个签名 secrets，不在控制台打印密码：
+工作流支持两种入口：
+
+- **自动发版**：推送 `v*` 版本标签后，自动检查、打包、验证签名、上传 APK 和校验文件，并公开发布 Release。
+- **手动补发**：在 **Actions → Signed release → Run workflow** 选择包含新工作流的 `codex/main` 分支，输入已有标签，例如 `v1.6.0`，也会自动打包并公开发布。已有标签不会因推送新代码而重新触发。
+
+首次发布 `v1.6.0`：先执行 `git push origin codex/main`，再执行 `git push origin v1.6.0`。因为这个标签创建于自动发版配置之前，请使用上述手动入口运行一次。不要移动或强制覆盖现有标签。
+
+以后发布新版本，例如 `v1.6.1`：
+
+1. 修改 `release/version.properties`：设置 `versionName=1.6.1` 并提高 `versionCode`。当前保持 `prerelease=true`，直到完成预览验证。
+2. 添加对应的中英文发布说明 `release/notes/v1.6.1.md`，完成源码修改后提交。
+3. 在包含新工作流的提交上创建并推送标签：
 
    ```powershell
-   ./scripts/configure-github-signing.ps1 -SigningProperties C:/private/signing.properties
+   git push origin codex/main
+   git tag -a v1.6.1 -m "JianVault 1.6.1"
+   git push origin v1.6.1
    ```
 
-   名称为 `JIANVAULT_KEYSTORE_BASE64`、`JIANVAULT_STORE_PASSWORD`、`JIANVAULT_KEY_ALIAS`、`JIANVAULT_KEY_PASSWORD`。
+标签必须与版本文件一致。只有推送版本标签才会自动发布；普通源码提交只触发 Source checks。任务全部成功后，用户即可在 Releases 的 Assets 下载 APK，不需要你再手动点击 Publish。工作流先创建带附件的草稿，再自动公开；失败时不会覆盖已有 Release。已存在同名 Release 时任务会停止，请先检查现有版本。
 
-3. 推送源码提交和对应标签，在 **Actions → Signed release draft → Run workflow** 输入标签。
-4. 工作流构建并验证 APK，上传附件后创建**预发布草稿**。最后由你检查草稿，再手动发布。
+若组织或仓库限制了 Actions，请在 **Settings → Actions → General** 允许本工作流使用的 Actions 和 `contents: write` 权限。流程仍跳过 Android Lint；公开版本会根据 `prerelease=true` 标记为预发布。
 
 Source checks 工作流不需要签名 secrets，其中的开发调试包也不是公开发布附件。私钥和密码不能作为 Release 附件或源码上传。
 

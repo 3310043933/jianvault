@@ -38,21 +38,32 @@ The script runs tests, builds a non-debuggable signed APK, verifies its applicat
 
 The expected public signing-certificate digest is committed in `release/signing-certificate.sha256`. Private keystores and passwords are never committed. The initial maintainer's local material was generated in `%LOCALAPPDATA%/JianVault/signing`; keep an independent secure backup of both the keystore and its passwords. Losing them prevents normal updates signed with this identity. Do not generate a fresh key for each version.
 
-## Optional: have GitHub Actions create a draft
+## Build and publish with GitHub Actions
 
-This is optional and can be configured later. The workflow never publishes automatically.
+Configure four repository secrets under **Settings → Secrets and variables → Actions** once: `JIANVAULT_KEYSTORE_BASE64`, `JIANVAULT_STORE_PASSWORD`, `JIANVAULT_KEY_ALIAS`, and `JIANVAULT_KEY_PASSWORD`. Enter them manually or use `scripts/configure-github-signing.ps1`.
 
-1. Install GitHub CLI and authenticate to your repository.
-2. Set the four signing secrets without printing them:
+The workflow supports two entry points:
+
+- **Automatic release**: pushing a `v*` tag runs checks, builds and verifies the signed APK, uploads the APK and verification files, and publishes the release publicly.
+- **Manual release**: open **Actions → Signed release → Run workflow**, select `codex/main` containing the updated workflow, and enter an existing tag such as `v1.6.0`. This also builds and publishes automatically. Pushing new source commits does not retrigger an existing tag.
+
+For the initial `v1.6.0`, run `git push origin codex/main` and `git push origin v1.6.0`, then use the manual entry point once: this tag predates the automatic-release configuration. Do not move or force-update existing tags.
+
+For a future release such as `v1.6.1`:
+
+1. Set `versionName=1.6.1` and increase `versionCode` in `release/version.properties`. Keep `prerelease=true` until preview validation is complete.
+2. Add bilingual notes at `release/notes/v1.6.1.md` and commit the completed changes.
+3. Create the tag on a commit containing the updated workflow and push it:
 
    ```powershell
-   ./scripts/configure-github-signing.ps1 -SigningProperties C:/private/signing.properties
+   git push origin codex/main
+   git tag -a v1.6.1 -m "JianVault 1.6.1"
+   git push origin v1.6.1
    ```
 
-   Secret names: `JIANVAULT_KEYSTORE_BASE64`, `JIANVAULT_STORE_PASSWORD`, `JIANVAULT_KEY_ALIAS`, `JIANVAULT_KEY_PASSWORD`.
+The tag must match the version file. Only version-tag pushes publish automatically; ordinary source pushes run Source checks. After successful completion, users can download the APK from release Assets without another manual Publish step. The workflow creates a draft with assets before publishing it automatically. Failures never overwrite an existing release; an existing release with the same tag stops the task and must be inspected first.
 
-3. Push the source commit and matching tag. In **Actions → Signed release draft → Run workflow**, supply the tag.
-4. The workflow builds and verifies the APK, attaches assets to a **draft prerelease**, and stops. Open the draft, review it, and publish manually.
+If organization or repository policies restrict Actions, allow the workflow's actions and `contents: write` permission under **Settings → Actions → General**. Android Lint is still skipped; `prerelease=true` marks the published release as a prerelease.
 
 The source-check workflow does not need signing secrets. Its developer APK is not the public release asset. Do not upload a private keystore or passwords as release attachments or source files.
 
