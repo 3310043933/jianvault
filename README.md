@@ -17,17 +17,17 @@ Maintainer publishing: after configuring signing secrets, double-click `发布�
 - **Recovery codes:** store and mark codes used within authenticator entries. Copying a code does not mark it used or change its status on the website. Website credential pages use notes instead of recovery-code controls.
 - **Encrypted backups:** supply your own key, export all vault records and groups as encrypted text, copy the text, or save a UTF-8 TXT file. Import through a TXT file or pasted text.
 - **Exact-match merge:** skip only records whose complete stored contents match. Any changed field creates a separate entry. Existing records remain intact, including existing local duplicates. Replacement is a separate, confirmed action.
-- **Chinese and English:** follow the system language or select 简体中文 / English in **Help → Language**. Language selection never translates or changes saved names, credentials, notes, group names, or backup contents.
+- **21 languages:** choose a language on first launch and change it under **Navigation menu → Language**. Options include representative flags and native names. Follow-system mode is available; saved names, credentials, notes, groups, and backups are never translated.
 
-The navigation menu contains exactly four pages: **Authenticator**, **Website credentials**, **Encrypted import / export**, and **Help**. Website group controls stay on the website credentials page.
+The navigation menu contains five pages: **Authenticator**, **Website credentials**, **Encrypted import / export**, **Language**, and **Help**. Website group controls stay on the website credentials page.
 
 ## Getting started
 
-1. Install a locally built APK on Android 8.0 or later. Set a device screen lock before opening the vault.
+1. Install a locally built APK on Android 8.0 or later. Set a device screen lock and choose a language on first launch before opening the vault.
 2. For TOTP, add the website's authenticator setup key or scan its QR code, then enter the generated code on that website to complete setup. A TOTP setup key is different from a login password. The code changes with time; the setup key does not.
 3. For fixed passwords, open **Website credentials** and save an entry. Use the group selector and **Manage groups** on that page. Deleting a group moves its entries to **Ungrouped** without deleting their data.
 4. Open entry details to view, edit, move, or copy credentials. Passwords are hidden by default. **Copy all** includes the name, URL, username, password, and nonempty notes.
-5. Open **Help → Language** to change the interface language. Switching recreates the app screen and may require system authentication again.
+5. Change the language later from the navigation menu. Switching recreates the interface and requires system authentication again.
 
 ## Backup and import
 
@@ -86,3 +86,9 @@ Development instructions: [English](AGENTS.md) · [简体中文](AGENTS.zh-CN.md
 ## Licensing and dependencies
 
 No project-wide license has been selected yet. Third-party component notices and their original licenses are preserved separately: [English](THIRD_PARTY.md) · [简体中文](THIRD_PARTY.zh-CN.md).
+
+## Interface languages
+
+Supported languages: English, Simplified Chinese, Traditional Chinese, Spanish, French, German, Portuguese, Russian, Arabic, Hindi, Bengali, Japanese, Korean, Indonesian, Turkish, Vietnamese, Italian, Thai, Persian, Urdu, and Swahili, plus system default. Arabic, Persian, and Urdu use right-to-left layout and drawer gestures. Flags are representative markers; languages are used across national borders.
+
+English and Simplified Chinese use the original copy. Other locales are machine-assisted initial translations and have not all received native-speaker review. UI text, validation errors, and copied field labels are bundled statically in the APK. The app never translates over the network or translates user data. Existing installations without an explicit language preference see the chooser once; an explicitly saved preference is preserved.

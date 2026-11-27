@@ -8,7 +8,7 @@ $javaSuffix = if ($IsWindows) { '.exe' } else { '' }
 $sourceDir = Join-Path $projectDir 'app\src\main\java\cn\local\simpleauth'
 $jsonLibrary = Join-Path $PSScriptRoot 'libs\json-20240303.jar'
 $testClassPath = $testOutputDir + [IO.Path]::PathSeparator + $jsonLibrary
-$testSources = @('Otp.java', 'RecoveryCodes.java', 'LoginDetails.java', 'VaultCipher.java', 'PasswordGroup.java', 'VaultState.java', 'VaultCodec.java', 'PasswordPresentation.java', 'BackupCodec.java', 'VaultMerge.java', 'ErrorMessages.java') | ForEach-Object { Join-Path $sourceDir $_ }
+$testSources = @('Otp.java', 'RecoveryCodes.java', 'LoginDetails.java', 'VaultCipher.java', 'PasswordGroup.java', 'VaultState.java', 'VaultCodec.java', 'PasswordPresentation.java', 'BackupCodec.java', 'VaultMerge.java', 'ErrorMessages.java', 'LanguageCatalog.java') | ForEach-Object { Join-Path $sourceDir $_ }
 $testSources += @('OtpTest.java', 'RecoveryCodesTest.java', 'LoginDetailsTest.java', 'VaultCipherTest.java', 'PasswordGroupsTest.java', 'NotesTest.java', 'BackupCodecTest.java', 'VaultMergeTest.java', 'InternationalizationTest.java') | ForEach-Object { Join-Path $PSScriptRoot $_ }
 & (Join-Path $env:JAVA_HOME ('bin/javac' + $javaSuffix)) -encoding UTF-8 -cp $jsonLibrary -d $testOutputDir @testSources
 if ($LASTEXITCODE -ne 0) { throw 'Test compilation failed.' }

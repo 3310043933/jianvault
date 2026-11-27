@@ -21,6 +21,18 @@ public final class InternationalizationTest {
         check(ErrorMessages.translate("用户自己的文字", true).equals("用户自己的文字"), "Unknown text is not machine-translated");
         check(ErrorMessages.translate("Already English", true).equals("Already English"), "No double translation");
         check(ErrorMessages.translate(null, true) == null, "Null error remains null");
+        String localized = PasswordPresentation.copyAll(account, new String[]{"اسم: ", "URL: ", "حساب: ", "كلمة المرور: ", "ملاحظات: "});
+        check(localized.startsWith("اسم: 用户名称\nURL: https://example.invalid"), "Localized copy labels");
+        check(localized.contains("كلمة المرور:   复制Password!  \nملاحظات: 备注\nDo not translate"), "RTL labels preserve exact user values");
+        check(before.equals(VaultCodec.encode(state)), "Localized copy never mutates data");
+        check(LanguageCatalog.CODES.length == 21, "Twenty-one languages");
+        check(new java.util.HashSet<>(java.util.Arrays.asList(LanguageCatalog.CODES)).size() == 21, "No duplicate language codes");
+        for (String code : LanguageCatalog.CODES) check(LanguageCatalog.supports(code), "Supported language: " + code);
+        check(LanguageCatalog.supports("system"), "System language supported");
+        check(LanguageCatalog.supports("zh") && LanguageCatalog.supports("en"), "Existing language preferences preserved");
+        check(!LanguageCatalog.supports("unknown") && !LanguageCatalog.supports(null), "Unknown preference rejected");
+        check("validation_error_040".equals(ErrorMessages.resourceKey("请填写登录账号和密码")), "Known error has stable resource key");
+        check(ErrorMessages.resourceKey("用户自己的文字") == null && ErrorMessages.resourceKey(null) == null, "User content has no translation key");
         System.out.println("PASS: " + count + " internationalization checks.");
     }
 }

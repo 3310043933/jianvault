@@ -31,7 +31,7 @@ public class MainActivity extends Activity {
     private final List<Runnable> updates = new ArrayList<>();
     private LinearLayout root, content;
     private DrawerHost drawer;
-    private enum Screen { OTP, PASSWORDS, BACKUP, HELP }
+    private enum Screen { OTP, PASSWORDS, BACKUP, LANGUAGE, HELP }
     private Screen screen = Screen.OTP;
     private String selectedGroupId, passwordQuery = "";
     private Vault vault;
@@ -55,6 +55,7 @@ public class MainActivity extends Activity {
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+        getWindow().getDecorView().setLayoutDirection(getResources().getConfiguration().getLayoutDirection());
         vault = new Vault(this);
         Object retained = getLastNonConfigurationInstance();
         if (retained instanceof BackupFileHandoff) {
@@ -81,7 +82,7 @@ public class MainActivity extends Activity {
     }
     @Override protected void onSaveInstanceState(Bundle out) { super.onSaveInstanceState(out); out.putBoolean("authenticating", authenticating); }
     @Override public Object onRetainNonConfigurationInstance() { return new BackupFileHandoff(pendingBackupFileText, pendingBackupRead, pendingBackupWrite); }
-    @Override protected void onResume() { super.onResume(); if (!isFinishing() && !unlocked && !authenticating) unlock(); }
+    @Override protected void onResume() { super.onResume(); if (!isFinishing() && AppLanguage.hasSelection(this) && !unlocked && !authenticating) unlock(); }
     @Override protected void onStop() {
         super.onStop(); handler.removeCallbacks(ticker);
         if (!authenticating) {
@@ -97,11 +98,13 @@ public class MainActivity extends Activity {
     @Override protected void onDestroy() { backupGeneration++; backupWorker.shutdown(); super.onDestroy(); }
     private void lockedScreen() {
         root.removeAllViews();
+        if (!AppLanguage.hasSelection(this)) { renderLanguagePage(true); return; }
         root.addView(text(getString(R.string.app_name), 32, INK, true)); space(root, 16);
         root.addView(text(getString(R.string.ui_unlock_with_your_device_pin_001), 16, MUTED, false));
         space(root, 24); button(root, getString(R.string.ui_unlock_vault_002), this::unlock);
     }
     @SuppressWarnings("deprecation") private void unlock() {
+        if (!AppLanguage.hasSelection(this)) { root.removeAllViews(); renderLanguagePage(true); return; }
         KeyguardManager keyguard = (KeyguardManager) getSystemService(KEYGUARD_SERVICE);
         if (!keyguard.isDeviceSecure()) {
             root.removeAllViews(); root.addView(text(getString(R.string.ui_secure_your_device_first_003), 28, INK, true)); space(root, 16);
@@ -148,8 +151,9 @@ public class MainActivity extends Activity {
         LinearLayout header = new LinearLayout(this); header.setGravity(Gravity.CENTER_VERTICAL);
         TextView menu = text("☰", 27, GREEN, true); menu.setGravity(Gravity.CENTER); menu.setContentDescription(getString(R.string.ui_open_navigation_menu_010));
         menu.setOnClickListener(v -> drawer.open()); header.addView(menu, new LinearLayout.LayoutParams(dp(48), dp(48)));
-        String pageTag = getString(screen == Screen.PASSWORDS ? R.string.tag_passwords : screen == Screen.BACKUP ? R.string.tag_backup : screen == Screen.HELP ? R.string.tag_help : R.string.tag_authenticator);
+        String pageTag = getString(screen == Screen.PASSWORDS ? R.string.tag_passwords : screen == Screen.BACKUP ? R.string.tag_backup : screen == Screen.LANGUAGE ? R.string.language_button : screen == Screen.HELP ? R.string.tag_help : R.string.tag_authenticator);
         TextView tag = text(pageTag, 11, GREEN, true); tag.setLetterSpacing(.13f); header.addView(tag); root.addView(header);
+        if (screen == Screen.LANGUAGE) { renderLanguagePage(false); return; }
         if (screen == Screen.HELP) { renderHelp(); return; }
         if (screen == Screen.BACKUP) { renderBackupPage(); return; }
         if (screen == Screen.PASSWORDS && !fatal) { renderPasswords(); return; }
@@ -182,6 +186,7 @@ public class MainActivity extends Activity {
     }
     @Override public void onBackPressed() { goBack(); }
     private void goBack() {
+        if (!AppLanguage.hasSelection(this)) { finish(); return; }
         if (drawer.isOpen()) { drawer.close(); return; }
         if (screen != Screen.OTP) { screen = Screen.OTP; passwordQuery = ""; render(); return; }
         finish();
@@ -196,14 +201,15 @@ public class MainActivity extends Activity {
         navItem(body, getString(R.string.ui_authenticator_022), screen == Screen.OTP, () -> openScreen(Screen.OTP));
         navItem(body, getString(R.string.ui_website_credentials_023), screen == Screen.PASSWORDS, () -> openPasswords(null));
         navItem(body, getString(R.string.ui_encrypted_import_export_024), screen == Screen.BACKUP, () -> openScreen(Screen.BACKUP));
+        navItem(body, "🌐  " + getString(R.string.language_button), screen == Screen.LANGUAGE, () -> openScreen(Screen.LANGUAGE));
         navItem(body, getString(R.string.ui_help_025), screen == Screen.HELP, () -> openScreen(Screen.HELP));
         return body;
     }
-    private void navItem(LinearLayout parent, String label, boolean selected, Runnable action) {
+    private TextView navItem(LinearLayout parent, String label, boolean selected, Runnable action) {
         TextView item = text(label, 15, selected ? GREEN : INK, selected); item.setGravity(Gravity.CENTER_VERTICAL);
         item.setPadding(dp(14), dp(12), dp(14), dp(12)); item.setMinHeight(dp(52));
         if (selected) { GradientDrawable bg = new GradientDrawable(); bg.setColor(0xFFE1EDE5); bg.setCornerRadius(dp(14)); item.setBackground(bg); }
-        item.setOnClickListener(v -> action.run()); parent.addView(item, new LinearLayout.LayoutParams(-1, -2));
+        item.setOnClickListener(v -> action.run()); parent.addView(item, new LinearLayout.LayoutParams(-1, -2)); return item;
     }
     private void renderPasswords() {
         space(root, 4); root.addView(text(getString(R.string.ui_website_credentials_023), 29, INK, true));
@@ -274,7 +280,6 @@ public class MainActivity extends Activity {
         space(root, 4); root.addView(text(getString(R.string.ui_help_025), 29, INK, true)); space(root, 18);
         ScrollView scroll = new ScrollView(this); root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
         LinearLayout body = new LinearLayout(this); body.setOrientation(LinearLayout.VERTICAL); scroll.addView(body);
-        button(body, getString(R.string.language_button), this::chooseLanguage); space(body, 10);
         body.addView(text(getString(R.string.language_help), 13, MUTED, false)); space(body, 20);
         helpSection(body, getString(R.string.ui_navigation_047), getString(R.string.ui_tap_at_the_top_left_048));
         helpSection(body, getString(R.string.ui_authenticator_022), getString(R.string.ui_scan_a_qr_code_or_049));
@@ -352,7 +357,7 @@ public class MainActivity extends Activity {
         card.addView(text(a.passwordOnly ? getString(R.string.ui_website_password_083) : getString(R.string.ui_authenticator_totp_084), 11, GREEN, true)); space(card, 6);
         card.addView(text(a.issuer.isEmpty() ? getString(R.string.ui_authenticator_account_085) : a.issuer, 19, INK, true)); card.addView(text(a.name, 14, MUTED, false));
         if (!a.passwordOnly) {
-        TextView code = text("", 37, GREEN, true); code.setTypeface(Typeface.MONOSPACE, Typeface.BOLD); code.setLetterSpacing(.05f); code.setPadding(0, dp(14), 0, dp(8));
+        TextView code = text("", 37, GREEN, true); code.setTextDirection(View.TEXT_DIRECTION_LTR); code.setTypeface(Typeface.MONOSPACE, Typeface.BOLD); code.setLetterSpacing(.05f); code.setPadding(0, dp(14), 0, dp(8));
         code.setContentDescription(getString(R.string.ui_verification_code_tap_to_copy_086)); card.addView(code);
         TextView remaining = text("", 12, MUTED, false); card.addView(remaining);
         ProgressBar bar = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal); bar.setMax(a.period * 1000);
@@ -637,7 +642,7 @@ public class MainActivity extends Activity {
         if (Build.VERSION.SDK_INT >= 29) form.setImportantForContentCapture(View.IMPORTANT_FOR_CONTENT_CAPTURE_NO_EXCLUDE_DESCENDANTS);
         form.addView(text(account.issuer, 23, INK, true));
         form.addView(text(getString(R.string.group_field, groupName(account.groupId)), 13, MUTED, false)); space(form, 14);
-        button(form, getString(R.string.ui_copy_all_183), () -> copySensitive(PasswordPresentation.copyAll(account, AppLanguage.isEnglish(this)), getString(R.string.ui_complete_website_credentials_184), getString(account.login.notes.isEmpty() ? R.string.credentials_copied : R.string.credentials_notes_copied))); space(form, 16);
+        button(form, getString(R.string.ui_copy_all_183), () -> copySensitive(PasswordPresentation.copyAll(account, new String[]{getString(R.string.copy_name), getString(R.string.copy_url), getString(R.string.copy_username), getString(R.string.copy_password), getString(R.string.copy_notes)}), getString(R.string.ui_complete_website_credentials_184), getString(account.login.notes.isEmpty() ? R.string.credentials_copied : R.string.credentials_notes_copied))); space(form, 16);
         form.addView(text(getString(R.string.ui_website_url_188), 12, MUTED, false)); form.addView(text(account.login.website.isEmpty() ? getString(R.string.ui_not_provided_189) : account.login.website, 15, INK, false)); space(form, 12);
         form.addView(text(getString(R.string.ui_username_190), 12, MUTED, false)); form.addView(text(account.login.username, 16, INK, true));
         Button copyUser = new Button(this); copyUser.setText(getString(R.string.ui_copy_username_191)); copyUser.setOnClickListener(v -> copySensitive(account.login.username, getString(R.string.ui_username_190), getString(R.string.ui_username_copied_192))); form.addView(copyUser);
@@ -819,16 +824,34 @@ public class MainActivity extends Activity {
                 }).create()));
     }
     private void help() { openScreen(Screen.HELP); }
-    private String localError(String message) { return ErrorMessages.translate(message, AppLanguage.isEnglish(this)); }
-    private void chooseLanguage() {
-        String[] modes = {"system", "zh", "en"};
-        String[] labels = {getString(R.string.language_system), getString(R.string.language_native_zh), getString(R.string.language_native_en)};
-        int selected = java.util.Arrays.asList(modes).indexOf(AppLanguage.selected(this));
-        showSecure(new AlertDialog.Builder(this).setTitle(getString(R.string.language_setting))
-            .setSingleChoiceItems(labels, Math.max(0, selected), (dialog, which) -> {
-                dialog.dismiss();
-                if (!modes[which].equals(AppLanguage.selected(this))) { AppLanguage.save(this, modes[which]); recreate(); }
-            }).setNegativeButton(android.R.string.cancel, null).create());
+    private String localError(String message) {
+        String key = ErrorMessages.resourceKey(message);
+        int id = key == null ? 0 : getResources().getIdentifier(key, "string", getPackageName());
+        return id == 0 ? message : getString(id);
+    }
+    private void renderLanguagePage(boolean firstRun) {
+        space(root, 8);
+        root.addView(text(getString(firstRun ? R.string.language_welcome : R.string.language_setting), 28, INK, true));
+        space(root, 12);
+        root.addView(text(getString(firstRun ? R.string.language_first_run : R.string.language_help), 14, MUTED, false));
+        space(root, 16);
+        ScrollView scroll = new ScrollView(this);
+        root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+        LinearLayout body = new LinearLayout(this); body.setOrientation(LinearLayout.VERTICAL); scroll.addView(body);
+        languageOption(body, "system", "🌐  " + getString(R.string.language_system));
+        String[] labels = getResources().getStringArray(R.array.language_native_labels);
+        for (int i = 0; i < LanguageCatalog.CODES.length; i++) languageOption(body, LanguageCatalog.CODES[i], labels[i]);
+        space(body, 12);
+        body.addView(text(getString(R.string.language_flags_help), 12, MUTED, false));
+    }
+    private void languageOption(LinearLayout parent, String code, String label) {
+        boolean selected = AppLanguage.hasSelection(this) && code.equals(AppLanguage.selected(this));
+        TextView option = navItem(parent, (selected ? "✓  " : "") + label, selected, () -> {
+            if (!AppLanguage.hasSelection(this) || !code.equals(AppLanguage.selected(this))) {
+                AppLanguage.save(this, code); recreate();
+            }
+        });
+        if (!code.equals("system")) option.setTextLocale(java.util.Locale.forLanguageTag(code));
     }
     private EditText field(LinearLayout parent, String hint, boolean secret) {
         EditText edit = new EditText(this); edit.setHint(hint); edit.setTextSize(15); edit.setSingleLine(true);
