@@ -11,3 +11,9 @@ local.properties
 *.aab
 outputs/
 output/
+*.p12
+*.pfx
+signing.properties
+*.signing.properties
+.secrets/
+release-artifacts/

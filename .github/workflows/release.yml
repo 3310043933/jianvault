@@ -1,0 +1,66 @@
+name: Signed release draft
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag
+        required: true
+        default: v1.6.0
+permissions:
+  contents: write
+concurrency:
+  group: release-${{ inputs.tag }}
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ inputs.tag }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - name: Validate release tag
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          $version = (Select-String -Path release/version.properties -Pattern '^versionName=(.+)$').Matches[0].Groups[1].Value
+          if ($env:RELEASE_TAG -cne ('v'+$version)) { throw 'Tag does not match release/version.properties' }
+      - name: Install Android SDK components
+        run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
+      - name: Build and verify public APK
+        shell: pwsh
+        env:
+          JIANVAULT_KEYSTORE_BASE64: ${{ secrets.JIANVAULT_KEYSTORE_BASE64 }}
+          JIANVAULT_STORE_PASSWORD: ${{ secrets.JIANVAULT_STORE_PASSWORD }}
+          JIANVAULT_KEY_ALIAS: ${{ secrets.JIANVAULT_KEY_ALIAS }}
+          JIANVAULT_KEY_PASSWORD: ${{ secrets.JIANVAULT_KEY_PASSWORD }}
+          JIANVAULT_STORE_FILE: ${{ runner.temp }}/jianvault-release.jks
+        run: |
+          foreach ($name in @('JIANVAULT_KEYSTORE_BASE64','JIANVAULT_STORE_PASSWORD','JIANVAULT_KEY_ALIAS','JIANVAULT_KEY_PASSWORD')) {
+            if (-not [Environment]::GetEnvironmentVariable($name)) { throw ('Missing repository secret: '+$name) }
+          }
+          try {
+            [IO.File]::WriteAllBytes($env:JIANVAULT_STORE_FILE,[Convert]::FromBase64String($env:JIANVAULT_KEYSTORE_BASE64))
+            ./scripts/build-release.ps1 -OutputDirectory (Join-Path $env:RUNNER_TEMP 'jianvault-release-assets') -SkipLint
+          } finally { Remove-Item -LiteralPath $env:JIANVAULT_STORE_FILE -Force -ErrorAction SilentlyContinue }
+      - name: Create draft with installable APK
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          $dir = Join-Path $env:RUNNER_TEMP 'jianvault-release-assets'
+          $data = Get-Content -LiteralPath (Join-Path $dir 'RELEASE_DATA.json') -Raw | ConvertFrom-Json
+          $args = @('release','create',$env:RELEASE_TAG,'--repo',$env:GITHUB_REPOSITORY,'--verify-tag','--draft','--latest=false','--title',$data.name,'--notes-file',(Join-Path $dir 'RELEASE_NOTES.md'))
+          if ($data.prerelease) { $args += '--prerelease' }
+          $args += @((Join-Path $dir ('jianvault-'+$env:RELEASE_TAG.Substring(1)+'.apk')),(Join-Path $dir 'SHA256SUMS.txt'),(Join-Path $dir 'SIGNING_CERTIFICATE.txt'))
+          & gh @args
+          if ($LASTEXITCODE -ne 0) { throw 'Draft creation failed. An existing release is never overwritten automatically.' }

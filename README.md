@@ -4,7 +4,9 @@
 
 An offline Android vault for TOTP codes, website credentials, recovery codes, and encrypted backups.
 
-Suggested GitHub repository name: **`jianvault`**
+Repository: **[3310043933/jianvault](https://github.com/3310043933/jianvault)**
+
+[Download installable APKs](https://github.com/3310043933/jianvault/releases) · [Publishing guide](release/README.md)
 
 ## Features
 
@@ -66,7 +68,7 @@ sdk.dir=C:/Android/Sdk
 
 On macOS/Linux, use `./gradlew` instead. Debug output: `app/build/outputs/apk/debug/app-debug.apk`.
 
-The current release build configuration also uses the local debug signing configuration, with debugging disabled. Before distributing production releases, establish a private release-signing and upgrade plan. **Do not uninstall an installed vault to work around a signing mismatch:** uninstalling deletes its local data. Signing keys, APKs, build outputs, caches, and `local.properties` must not be committed.
+Public releases use application ID `io.github.jianvault.app` and require the fixed private release signer. The old `cn.local.simpleauth` test app is retained for safe migration through encrypted backups. Developer builds use the separate `.debug` application ID. **Do not uninstall an existing vault before exporting and verifying its backup.** See the [release guide](release/README.md) for signed builds and GitHub publishing. Private signing keys, passwords, APKs, build outputs, caches, and `local.properties` are not committed.
 
 ## Tests and development
 

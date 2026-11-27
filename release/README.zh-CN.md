@@ -1,0 +1,59 @@
+# 发布 JianVault / 简验证
+
+[English](README.md) | **简体中文**
+
+## 最简单：上传已准备好的 APK
+
+已有安装包时，不需要配置 GitHub Actions 或签名 secrets。
+
+1. 在当前源码目录推送准备好的提交和标签：
+
+   ```powershell
+   git push origin codex/main
+   git push origin v1.6.0
+   ```
+
+2. 打开 [New release](https://github.com/3310043933/jianvault/releases/new)。
+3. 选择标签 **v1.6.0**，标题填 **JianVault v1.6.0 / 简验证**。
+4. 将准备好的 `RELEASE_NOTES.md` 粘贴到描述里。本次保持勾选 **This is a pre-release**。
+5. 上传 `jianvault-1.6.0.apk`、`SHA256SUMS.txt` 和 `SIGNING_CERTIFICATE.txt`，检查草稿，准备好后点击 **Publish release**。
+
+本地发布文件夹还提供「发布参数.txt」方便复制各字段，`RELEASE_DATA.json` 是对应的 Release API 请求数据，两者都不包含签名密码。不要上传私有签名文件。
+
+## 你已经安装的测试版
+
+公开版应用 ID 是 `io.github.jianvault.app`，旧版 `cn.local.simpleauth` 会保留，二者独立安装。在旧版导出加密备份，再安装公开版、导入并核对数据；确认无误后才考虑移除旧版。若旧版还没有备份功能，需要先用原签名更新测试版，不能靠卸载旧版来安装公开版。
+
+开发调试包使用 `io.github.jianvault.app.debug`，也与公开版分开。
+
+## 以后生成新的公开安装包
+
+后续更新必须沿用同一发布私钥，它与用户加密保险库备份时输入的 Key 是两回事。修改 `release/version.properties`，提高 `versionCode`，添加对应版本的中英文发布说明，然后运行：
+
+```powershell
+./scripts/build-release.ps1 -SigningProperties C:/private/signing.properties -AndroidSdk C:/Android/Sdk -SkipLint
+```
+
+脚本会运行测试、构建关闭调试的签名 APK，检查应用 ID、版本和签名身份，并在源码仓库之外准备安装包、哈希、公开证书信息、发布说明和发布字段。缺少签名、使用 debug 证书、签名错误或编译失败时拒绝打包。`-SkipLint` 是当前预览版的明确选项，能够完整运行 Lint 后应移除。
+
+预期的公开证书哈希位于 `release/signing-certificate.sha256`，私钥和密码不进 Git。初始维护者的本机签名资料保存在 `%LOCALAPPDATA%/JianVault/signing`。请将 keystore 和对应密码另做安全备份；丢失后将无法按当前签名正常覆盖更新。不要每个版本重新生成私钥。
+
+## 可选：以后让 GitHub Actions 生成草稿
+
+这个功能可以以后再配置，不影响这次手动上传，工作流也不会自动公开发布。
+
+1. 安装 GitHub CLI，并登录自己的仓库。
+2. 用脚本设置四个签名 secrets，不在控制台打印密码：
+
+   ```powershell
+   ./scripts/configure-github-signing.ps1 -SigningProperties C:/private/signing.properties
+   ```
+
+   名称为 `JIANVAULT_KEYSTORE_BASE64`、`JIANVAULT_STORE_PASSWORD`、`JIANVAULT_KEY_ALIAS`、`JIANVAULT_KEY_PASSWORD`。
+
+3. 推送源码提交和对应标签，在 **Actions → Signed release draft → Run workflow** 输入标签。
+4. 工作流构建并验证 APK，上传附件后创建**预发布草稿**。最后由你检查草稿，再手动发布。
+
+Source checks 工作流不需要签名 secrets，其中的开发调试包也不是公开发布附件。私钥和密码不能作为 Release 附件或源码上传。
+
+参考：[GitHub Release 文档](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository)、[GitHub Actions secrets](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets)。

@@ -4,7 +4,9 @@
 
 离线安卓密码与动态验证码保险库，支持分组、备注、恢复码和加密备份。
 
-建议 GitHub 仓库名称：**`jianvault`**
+仓库：**[3310043933/jianvault](https://github.com/3310043933/jianvault)**
+
+[下载可安装 APK](https://github.com/3310043933/jianvault/releases) · [发布指南](release/README.zh-CN.md)
 
 ## 功能
 
@@ -66,7 +68,7 @@ sdk.dir=C:/Android/Sdk
 
 macOS/Linux 改用 `./gradlew`。调试 APK 位于 `app/build/outputs/apk/debug/app-debug.apk`。
 
-当前 release 构建也使用本机 debug 签名配置，但关闭调试功能。正式分发前需制定私有发布签名和升级方案。**不要通过卸载旧应用来解决签名不一致**，卸载会删除本机数据。签名私钥、APK、编译产物、缓存和 `local.properties` 不得提交。
+公开版使用独立应用 ID `io.github.jianvault.app`，必须提供固定正式签名；旧测试版 `cn.local.simpleauth` 保留，可通过加密备份安全迁移。开发调试包使用独立的 `.debug` 应用 ID。**不要在导出并核对备份之前卸载已有保险库。** 正式构建和 GitHub 发布步骤见[发布指南](release/README.zh-CN.md)。签名私钥、密码、APK、编译产物、缓存和 `local.properties` 不进 Git。
 
 ## 测试与开发
 
