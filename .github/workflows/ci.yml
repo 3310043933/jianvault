@@ -21,6 +21,9 @@ jobs:
       - name: Core and bilingual checks
         shell: pwsh
         run: ./tests/run.ps1 -OutputDirectory (Join-Path $env:RUNNER_TEMP 'jianvault-tests')
+      - name: Release publisher integration checks
+        shell: pwsh
+        run: ./tests/publish-release.tests.ps1
       - name: Install Android SDK components
         run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
       - name: Compile developer APK without release secrets

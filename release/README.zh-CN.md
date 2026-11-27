@@ -38,6 +38,20 @@
 
 预期的公开证书哈希位于 `release/signing-certificate.sha256`，私钥和密码不进 Git。初始维护者的本机签名资料保存在 `%LOCALAPPDATA%/JianVault/signing`。请将 keystore 和对应密码另做安全备份；丢失后将无法按当前签名正常覆盖更新。不要每个版本重新生成私钥。
 
+## 双击输入版本号发布（Windows）
+
+配置好四个 GitHub Actions Secrets 后，双击源码根目录的 **`发布新版本.cmd`**，输入比当前更高的版本号，例如 `1.6.1`；直接回车使用建议的下一个补丁版本。需要已安装 Git for Windows，并具有 origin 仓库的推送权限。Git 若提示登录，按提示完成登录即可；无需安装 GitHub CLI、PowerShell 7、JDK 或 Android SDK。
+
+脚本自动提高 `versionCode`，在缺少该版本发布说明时根据提交记录生成中英文说明，将当前所有未忽略的源码修改一起提交，再将当前分支和新版本标签一次推送到 origin。请确保当前未忽略的文件都是要公开的源码；已有该版本的发布说明会保留。脚本会保留 `prerelease` 设置，不会自动把预览版改成正式版。
+
+之后 GitHub Actions 自动构建并公开发布。脚本会打开 Actions 页面；本机显示上传成功只表示推送完成，云端构建和签名验证全部成功后才有可下载的 Release。远程版本已存在、版本号未提高或远程分支存在冲突时会停止，不会强制覆盖。若最后推送失败，本地提交和标签会保留，并显示可重试的推送命令。
+
+也可以从终端指定版本：
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\publish-release.ps1 -Version 1.6.1
+```
+
 ## GitHub Actions 自动打包发布
 
 首次将四个签名 secrets 配置到仓库的 **Settings → Secrets and variables → Actions**：`JIANVAULT_KEYSTORE_BASE64`、`JIANVAULT_STORE_PASSWORD`、`JIANVAULT_KEY_ALIAS`、`JIANVAULT_KEY_PASSWORD`。可以手动填写，也可以运行 `scripts/configure-github-signing.ps1`。

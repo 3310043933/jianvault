@@ -38,6 +38,20 @@ The script runs tests, builds a non-debuggable signed APK, verifies its applicat
 
 The expected public signing-certificate digest is committed in `release/signing-certificate.sha256`. Private keystores and passwords are never committed. The initial maintainer's local material was generated in `%LOCALAPPDATA%/JianVault/signing`; keep an independent secure backup of both the keystore and its passwords. Losing them prevents normal updates signed with this identity. Do not generate a fresh key for each version.
 
+## Publish by double-clicking (Windows)
+
+After configuring the four GitHub Actions secrets, double-click **`发布新版本.cmd`** in the source root. Enter a version higher than the current one, such as `1.6.1`, or press Enter to accept the suggested next patch version. Git for Windows and push access to origin are required. Complete Git's sign-in prompt if shown. GitHub CLI, PowerShell 7, a JDK, and an Android SDK are not required locally.
+
+The script increments `versionCode`, generates bilingual notes from commit messages if that version has no notes yet, commits all current non-ignored source changes, and atomically pushes the current branch and new version tag to origin. Ensure all non-ignored changes are intended to be public source. Existing notes for the new version are preserved. The existing `prerelease` setting is preserved.
+
+GitHub Actions then builds and publishes the release. The script opens the Actions page; a successful local upload means only that the push succeeded. A downloadable release appears after the cloud build and signing checks succeed. Existing versions, non-increasing version numbers, and remote branch conflicts stop the operation without force-overwriting history. If the final push fails, the local commit and tag are retained and a retry command is printed.
+
+You can also supply the version in a terminal:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\publish-release.ps1 -Version 1.6.1
+```
+
 ## Build and publish with GitHub Actions
 
 Configure four repository secrets under **Settings → Secrets and variables → Actions** once: `JIANVAULT_KEYSTORE_BASE64`, `JIANVAULT_STORE_PASSWORD`, `JIANVAULT_KEY_ALIAS`, and `JIANVAULT_KEY_PASSWORD`. Enter them manually or use `scripts/configure-github-signing.ps1`.

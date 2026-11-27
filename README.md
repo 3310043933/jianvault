@@ -8,6 +8,8 @@ Repository: **[3310043933/jianvault](https://github.com/3310043933/jianvault)**
 
 [Download installable APKs](https://github.com/3310043933/jianvault/releases) · [Publishing guide](release/README.md)
 
+Maintainer publishing: after configuring signing secrets, double-click `发布新版本.cmd` and enter a new version to commit source changes and trigger automatic GitHub build and publication. See the [publishing guide](release/README.md).
+
 ## Features
 
 - **Authenticator:** scan a QR code or enter a TOTP setup key. Supports SHA1/SHA256/SHA512, 6/8 digits, and refresh periods of 1–300 seconds.

@@ -8,6 +8,8 @@
 
 [下载可安装 APK](https://github.com/3310043933/jianvault/releases) · [发布指南](release/README.zh-CN.md)
 
+维护者发布：配置签名 Secrets 后，双击根目录的 `发布新版本.cmd`，输入新版本号即可提交源码并触发 GitHub 自动打包发布。详见[发布指南](release/README.zh-CN.md)。
+
 ## 功能
 
 - **动态验证码**：扫码或手动输入 TOTP 密钥，支持 SHA1/SHA256/SHA512、6/8 位以及 1～300 秒周期。
